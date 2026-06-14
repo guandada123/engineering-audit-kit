@@ -1,0 +1,14 @@
+# Example CODEOWNERS. Adjust teams/users to your org.
+# Syntax: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owners
+*       @team/leads
+
+# Backend
+app/**   @team/backend @alice
+
+# Frontend
+src/**   @team/frontend @bob
+
+# Infrastructure
+infra/** @team/devops

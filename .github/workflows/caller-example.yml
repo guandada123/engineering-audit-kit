@@ -1,0 +1,18 @@
+name: CI (caller)
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+jobs:
+  quality-gate:
+    uses: guan-org/engineering-audit-kit/.github/workflows/quality-gate.yml@v1
+    with:
+      node-version: '20'
+      run-eslint: true
+      run-prettier: true
+      run-php: auto
+      run-python: auto
+      npm-audit-level: high
+    secrets: inherit
