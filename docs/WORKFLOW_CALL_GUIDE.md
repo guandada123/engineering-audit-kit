@@ -16,9 +16,9 @@ on:
 
 jobs:
   quality-gate:
-    uses: guan-org/engineering-audit-kit/.github/workflows/quality-gate.yml@v1
+    uses: guandada123/engineering-audit-kit/.github/workflows/quality-gate.yml@v1
     # 也可以固定到具体 commit SHA：
-    # uses: guan-org/engineering-audit-kit/.github/workflows/quality-gate.yml@<commit-sha>
+    # uses: guandada123/engineering-audit-kit/.github/workflows/quality-gate.yml@<commit-sha>
     with:
       node-version: '20'
       run-eslint: true
@@ -48,7 +48,7 @@ on:
 
 jobs:
   call:
-    uses: guan-org/engineering-audit-kit/.github/workflows/quality-gate.yml@v1
+    uses: guandada123/engineering-audit-kit/.github/workflows/quality-gate.yml@v1
     secrets: inherit
 ```
 
