@@ -19,12 +19,12 @@ on:
         type: boolean
         default: true
       run-php:
-        description: PHP checks: auto|on|off
+        description: "PHP checks: auto|on|off"
         required: false
         type: string
         default: 'auto'
       run-python:
-        description: Python checks: auto|on|off
+        description: "Python checks: auto|on|off"
         required: false
         type: string
         default: 'auto'
