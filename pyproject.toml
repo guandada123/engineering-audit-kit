@@ -1,0 +1,8 @@
+[project]
+name = "engineering-audit-kit"
+version = "0.1.0"
+description = "工程审计工具包 — playbook/剧本/配置模板"
+requires-python = ">=3.10"
+dependencies = [
+    "pyyaml>=6.0",
+]

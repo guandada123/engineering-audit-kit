@@ -7,7 +7,7 @@ on:
 
 jobs:
   quality-gate:
-    uses: guan-org/engineering-audit-kit/.github/workflows/quality-gate.yml@v1
+    uses: guandada123/engineering-audit-kit/.github/workflows/quality-gate.yml@v1
     with:
       node-version: '20'
       run-eslint: true

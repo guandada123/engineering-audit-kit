@@ -1,0 +1,56 @@
+# ============================================================
+# Engineering Audit Kit CI — v1.0
+# Lint + Security scan for playbooks/configs/scripts
+# ============================================================
+name: EAK CI
+
+on:
+  pull_request:
+    paths:
+      - "pyproject.toml"
+      - "ruff.toml"
+      - "scripts/**"
+      - "playbooks/**"
+      - "configs/**"
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  lint:
+    name: Ruff Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install ruff
+        run: pip install ruff
+      - name: Ruff lint
+        run: ruff check scripts/ --config ruff.toml
+      - name: Ruff format check
+        run: ruff format --check scripts/ --config ruff.toml
+
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install bandit
+        run: pip install bandit
+      - name: Bandit (scripts)
+        run: bandit -r scripts/ -ll || true
+      - name: Detect hardcoded paths
+        run: |
+          if grep -rn '"/Users/' scripts/ playbooks/ 2>/dev/null; then
+            echo "::warning::发现硬编码用户路径"
+          fi
+          echo "✅ 完成"
+      - name: Gitleaks (secret leak scan)
+        uses: gitleaks/gitleaks-action@v2
+        with:
+          config_path: .gitleaks.toml

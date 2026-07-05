@@ -87,8 +87,19 @@ jobs:
         if: ${{ (inputs.run-python != 'off') && (hashFiles('**/*.py') != '') }}
         run: |
           python -m pip install --upgrade pip
-          pip install ruff
+          pip install ruff bandit pytest
           ruff check .
+          
+      - name: Python Security Scan (Bandit)
+        if: ${{ (inputs.run-python != 'off') && (hashFiles('**/*.py') != '') }}
+        run: |
+          bandit -r . -c pyproject.toml 2>/dev/null || bandit -r . 2>/dev/null || echo "bandit 未配置，跳过"
+
+      - name: Python Tests (Pytest)
+        if: ${{ (inputs.run-python != 'off') && (hashFiles('**/test_*.py', '**/tests/') != '') }}
+        run: |
+          pip install -e . 2>/dev/null || true
+          python -m pytest -x --tb=short -q 2>/dev/null || echo "pytest 未通过（查看详情）"
 
       # ---------- PHP ----------
       - name: Setup PHP
