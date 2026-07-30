@@ -105,5 +105,10 @@ jobs:
       # ---------- Secrets & Security ----------
       - name: Secrets Scan (Gitleaks)
         uses: gitleaks/gitleaks-action@v2
+        env:
+          # gitleaks-action v2 breaking change: scanning PRs now requires a token.
+          # Must be set at step level — declaring GITHUB_TOKEN at workflow_call top
+          # level triggers a "reserved name" conflict (see commit 9af6155).
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           args: detect --redact --source .
