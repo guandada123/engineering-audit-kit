@@ -1,9 +1,11 @@
 name: CI (caller)
 
+# ⚠️ 示例文件：演示下游仓库如何调用 reusable workflow quality-gate.yml。
+# 本仓库为纯工具/文档库（无 .py/.js/.php 应用代码），示例强制全开检查，
+# 若随 push/PR 自动执行必然红灯（gitleaks 全历史扫描等）→ 仅保留 workflow_dispatch
+# 手动演示能力，不作为本仓库的自动 CI 门禁（真实门禁见 eak-ci.yml）。
 on:
-  pull_request:
-  push:
-    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   quality-gate:

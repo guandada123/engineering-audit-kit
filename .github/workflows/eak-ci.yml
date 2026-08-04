@@ -52,5 +52,8 @@ jobs:
           echo "✅ 完成"
       - name: Gitleaks (secret leak scan)
         uses: gitleaks/gitleaks-action@v2
+        env:
+          # gitleaks-action v2 breaking change: PR 扫描强制要求 token（与 quality-gate 同修，见 e3f610e）
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           config_path: .gitleaks.toml
