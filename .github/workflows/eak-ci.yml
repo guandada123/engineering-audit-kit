@@ -55,5 +55,4 @@ jobs:
         env:
           # gitleaks-action v2 breaking change: PR 扫描强制要求 token（与 quality-gate 同修，见 e3f610e）
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          config_path: .gitleaks.toml
+        # 配置经仓库根 .gitleaks.toml 自动检测；action@v2 无 config_path 输入（会告警并被忽略）
