@@ -51,8 +51,7 @@ jobs:
           fi
           echo "✅ 完成"
       - name: Gitleaks (secret leak scan)
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          # gitleaks-action v2 breaking change: PR 扫描强制要求 token（与 quality-gate 同修，见 e3f610e）
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        # 配置经仓库根 .gitleaks.toml 自动检测；action@v2 无 config_path 输入（会告警并被忽略）
+        # 直接调用 gitleaks 开源引擎（MIT 许可），规避 gitleaks-action@v2 自 2026-08 起强制要求
+        # GITLEAKS_LICENSE 密钥的 breaking change。引擎本身始终免费，经 Docker 调用无 license 限制。
+        run: |
+          docker run --rm -v "${{ github.workspace }}:/repo" zricethezav/gitleaks:latest detect --redact --source=/repo

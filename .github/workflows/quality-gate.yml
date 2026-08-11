@@ -114,12 +114,9 @@ jobs:
           find . -type f -name '*.php' -print0 | xargs -0 -n 1 -P 4 php -l
 
       # ---------- Secrets & Security ----------
+      # 直接调用 gitleaks 开源引擎（MIT 许可），规避 gitleaks-action@v2 自 2026-08 起强制要求
+      # GITLEAKS_LICENSE 密钥的 breaking change（缺失即 quality-gate 红灯）。
+      # gitleaks 引擎本身始终免费，经 Docker 调用无 license 限制；自动探测仓库根 .gitleaks.toml。
       - name: Secrets Scan (Gitleaks)
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          # gitleaks-action v2 breaking change: scanning PRs now requires a token.
-          # Must be set at step level — declaring GITHUB_TOKEN at workflow_call top
-          # level triggers a "reserved name" conflict (see commit 9af6155).
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          args: detect --redact --source .
+        run: |
+          docker run --rm -v "${{ github.workspace }}:/repo" zricethezav/gitleaks:latest detect --redact --source=/repo
