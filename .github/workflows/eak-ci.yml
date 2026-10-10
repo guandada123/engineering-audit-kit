@@ -12,11 +12,50 @@ on:
       - "scripts/**"
       - "playbooks/**"
       - "configs/**"
+      - ".github/workflows/**"
   push:
     branches: [main]
   workflow_dispatch:
 
 jobs:
+  workflows-validate:
+    # ⭐ 2026-10-10 新增：reusable workflow 自身必须是**合法 YAML** 才允许发布。
+    # 起因：tag v2 (6b346f2) 的 quality-gate.yml 有一行未加引号的
+    #   `description: PHP checks: auto|on|off`
+    # → YAML 非法（mapping values are not allowed here）→ 唯一下游 QuantTradingSystem
+    #   调它时**启动即失败**（无 job、无日志、只有"We likely failed because of a workflow file issue"），
+    #   自 2026-10-02 Dependabot 把 @v1 升到 @v2 起一直红；而本仓库自身 CI 只 lint scripts/，
+    #   完全没覆盖 workflows/ → 坏版本被直接打了 tag。
+    name: Workflow YAML Validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install PyYAML
+        run: pip install pyyaml
+      - name: Validate every .github/workflows/*.yml parses
+        run: |
+          python - <<'PY'
+          import sys, pathlib, yaml
+          bad = []
+          for f in sorted(pathlib.Path(".github/workflows").glob("*.y*ml")):
+              try:
+                  d = yaml.safe_load(f.read_text(encoding="utf-8"))
+              except yaml.YAMLError as e:
+                  bad.append((f, str(e).splitlines()[0]))
+                  continue
+              # 'on' 在 YAML 1.1 里会被解析成布尔 True，两种写法都接受
+              if not isinstance(d, dict) or not ({"on", True} & set(d)) or "jobs" not in d:
+                  bad.append((f, "缺少 on / jobs 顶层键"))
+          for f, why in bad:
+              print(f"::error file={f}::{why}")
+          if bad:
+              sys.exit(1)
+          print("✅ 全部 workflow YAML 合法")
+          PY
+
   lint:
     name: Ruff Lint
     runs-on: ubuntu-latest

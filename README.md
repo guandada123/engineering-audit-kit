@@ -24,6 +24,37 @@ pre-commit run --all-files
 bandit -r . -lll
 ```
 
+## 可复用工作流（下游调用）
+
+下游仓库这样调用（见 `.github/workflows/caller-example.yml`）：
+
+```yaml
+jobs:
+  quality-gate:
+    uses: guandada123/engineering-audit-kit/.github/workflows/quality-gate.yml@v3
+    with:
+      run-python: "on"
+      run-php: "off"
+    secrets: inherit
+```
+
+**版本铁律（2026-10-10 血的教训）**
+
+| tag | 状态 | 说明 |
+| --- | --- | --- |
+| `v1` | ✅ 可用 | 已修 gitleaks license 问题 |
+| `v2` | ⛔ **坏版本，勿用** | `quality-gate.yml` 里一行未加引号的 `description: PHP checks: auto|on|off` → **YAML 非法**；唯一下游 QuantTradingSystem 调它时**启动即失败**（无 job/无日志），自 2026-10-02 起 CI 红了 8 天 |
+| `v3` | ✅ **当前** | 在 v2 之上修 YAML、改 Docker 直调 gitleaks、并补 bandit / pytest 步骤 |
+
+⚠️ 两个坑，打 tag 前必看：
+
+1. **本仓库的 tag 与提交时间不一致**：`v2` 指向的提交（6b346f2）比 `v1`（ae57b18）**更旧**，
+   于是 Dependabot 按版本号"升级" v1→v2 实际上把下游**降级到了坏版本**。发新 tag 时务必确认
+   它指向 **当前 main**，且新 tag 号大于既有全部 tag。
+2. **必须有机器校验**：EAK CI 新增 `Workflow YAML Validate` job（`.github/workflows/**` 变更即触发），
+   任何 workflow 文件解析失败就红。此前 CI 只 lint `scripts/`，workflows/ 完全没覆盖，
+   坏文件才会被直接打上 tag。
+
 ## 项目结构
 
 ```
