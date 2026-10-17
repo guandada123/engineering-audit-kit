@@ -65,7 +65,8 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install ruff
-        run: pip install ruff
+        # 2026-10-17 钉死（与本地验证及根 pre-commit v0.15.17 对齐）：浮动版会静默改变门禁口径
+        run: pip install "ruff==0.15.17"
       - name: Ruff lint
         run: ruff check scripts/ --config ruff.toml
       - name: Ruff format check
