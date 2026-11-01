@@ -31,12 +31,18 @@ bandit -r . -lll
 ```yaml
 jobs:
   quality-gate:
-    uses: guandada123/engineering-audit-kit/.github/workflows/quality-gate.yml@v3
+    uses: guandada123/engineering-audit-kit/.github/workflows/quality-gate.yml@v7
     with:
       run-python: "on"
       run-php: "off"
+      # 单包仓库：留默认 auto，根目录 pytest 失败即红（v7 起不再吞错）
+      # 多包/微服务仓库：根目录一起收集会撞同名 tests 包，设 off 并由自己的 workflow 按服务跑
+      run-pytest: "auto"   # auto | on | off
     secrets: inherit
 ```
+
+> `run-pytest: off` 与「吞掉失败」的区别：off 会让该步骤在 GitHub 上显示为 **skipped**（可见），
+> 且含义是「测试由别处负责」；而 v6 之前的 `|| echo` 是显示 **success** 但实际失败——后者是假事实。
 
 ### 可直接拉取执行的脚本
 
@@ -54,7 +60,7 @@ jobs:
         with: { python-version: "3.12" }   # 需要 3.11+（tomllib）
       - run: |
           curl -fsSL -o /tmp/audit_locks.py \
-            https://raw.githubusercontent.com/guandada123/engineering-audit-kit/v6/scripts/audit_locks.py
+            https://raw.githubusercontent.com/guandada123/engineering-audit-kit/v7/scripts/audit_locks.py
           python3 /tmp/audit_locks.py --root .
 ```
 
@@ -74,7 +80,8 @@ jobs:
 | `v3` | ✅ 可用 | 在 v2 之上修 YAML、改 Docker 直调 gitleaks、并补 bandit / pytest 步骤 |
 | `v4` | ✅ 可用 | v3 + 新增 `scripts/audit_locks.py`（跨仓库消费的锁文件漏洞门禁，下游按 pin 的 tag 拉取执行） |
 | `v5` | ✅ 可用 | `audit_locks.py` 支持 `requirements.lock`（pip freeze 格式）；**工作流未变**，仍等同 v3 |
-| `v6` | ✅ **当前** | **修 quality-gate 的 pytest 假绿灯**：`|| echo` 吞掉测试失败 → 改为真红；`pip install -e .` 只在项目确有可安装包时执行（原 `|| true` 会掩盖安装失败）。**工作流有行为变更，引用方升级后会开始真红** |
+| `v6` | ✅ 可用 | **修 quality-gate 的 pytest 假绿灯**：`|| echo` 吞掉测试失败 → 改为真红；`pip install -e .` 只在项目确有可安装包时执行（原 `|| true` 会掩盖安装失败）。**工作流有行为变更，引用方升级后会开始真红** |
+| `v7` | ✅ **当前** | v6 + 新增 `run-pytest: auto\|on\|off` 输入。起因：多包/微服务仓库在根目录收集会撞同名 `tests` 包（pytest `ImportPathMismatchError`），v6 会让这类仓库无法用公共门；`off` 是**明确委托**（测试由仓库自己的 workflow 按服务跑），不是吞失败 |
 
 ⚠️ 两个坑，打 tag 前必看：
 

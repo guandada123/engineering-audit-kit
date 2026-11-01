@@ -28,6 +28,15 @@ on:
         required: false
         type: string
         default: 'auto'
+      run-pytest:
+        description: >-
+          Pytest 步骤开关：auto|on|off（默认 auto）。留 auto 即在仓库根跑 pytest，
+          测试失败即红。**多包/微服务仓库在根目录收集会因同名 tests 包冲突**
+          （pytest ImportPathMismatchError），若测试由自己的 workflow 按服务分别跑，
+          请显式设 off —— 这是「明确委托」，不是「吞掉失败」。
+        required: false
+        type: string
+        default: 'auto'
       npm-audit-level:
         description: npm audit level (low|moderate|high|critical)
         required: false
@@ -96,7 +105,7 @@ jobs:
           bandit -r . -c pyproject.toml 2>/dev/null || bandit -r . 2>/dev/null || echo "bandit 未配置，跳过"
 
       - name: Python Tests (Pytest)
-        if: ${{ (inputs.run-python != 'off') && (hashFiles('**/test_*.py', '**/tests/') != '') }}
+        if: ${{ (inputs.run-python != 'off') && (inputs.run-pytest != 'off') && (hashFiles('**/test_*.py', '**/tests/') != '') }}
         run: |
           # 仅当项目存在可安装包时才安装。EAK 自身是纯配置分发包（无 [build-system]、
           # 无 setup.py），直接 pip install -e . 必然失败；原写法用 `2>/dev/null || true`
@@ -106,7 +115,13 @@ jobs:
           fi
           # 原写法 `2>/dev/null || echo` 会吞掉 pytest 失败：所有引用本 workflow 的下游
           # 都会拿到假绿灯。测试不通过必须真的红。
-          python -m pytest -x --tb=short -q
+          python -m pytest -x --tb=short -q || {
+            rc=$?
+            echo "::error::pytest 未通过 (rc=$rc)。若报 ImportPathMismatchError / conftest 冲突，"
+            echo "::error::多为多包仓库在根目录一起收集所致：请在调用方设 run-pytest: off，"
+            echo "::error::改由仓库自己的 workflow 按服务分别 pytest（例如 cd <service> && pytest tests/）。"
+            exit $rc
+          }
 
       # ---------- PHP ----------
       - name: Setup PHP
