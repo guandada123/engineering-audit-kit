@@ -82,7 +82,9 @@ jobs:
 
       - name: Dependency Vulnerabilities (npm)
         if: ${{ hashFiles('package.json') != '' }}
-        run: npm audit --audit-level=${{ inputs['npm-audit-level'] }} || true
+        # v8：去掉行尾的 || true。原写法下这一步永远绿，名字叫 Dependency Vulnerabilities
+        # 却从不阻断，属假事实。要放松就用输入 npm-audit-level（默认 high，可设 critical）。
+        run: npm audit --audit-level=${{ inputs['npm-audit-level'] }}
 
       # ---------- Python ----------
       - name: Setup Python
@@ -101,8 +103,14 @@ jobs:
 
       - name: Python Security Scan (Bandit)
         if: ${{ (inputs.run-python != 'off') && (hashFiles('**/*.py') != '') }}
+        # v8：改为只阻断 HIGH（-lll），不再吞退出码。
+        # 原写法 bandit -c pyproject.toml 2>/dev/null || bandit -r . 2>/dev/null || echo 跳过
+        # 三段里任意一段成功即 exit 0 —— 发现高危也照样绿，且 -c pyproject.toml 在仓库根
+        # 没有 [tool.bandit] 段时会直接报错，这个错误正是被第一段 2>/dev/null 吞掉的。
+        # 因此不再传 -c，交给 bandit 自动发现 .bandit / setup.cfg / pyproject。
+        # 中危(MEDIUM)不阻断，本地要看得自己跑 -ll；确需阻断可在此改 -ll。
         run: |
-          bandit -r . -c pyproject.toml 2>/dev/null || bandit -r . 2>/dev/null || echo "bandit 未配置，跳过"
+          bandit -r . -lll -x ./.venv,./venv,./node_modules,./.git
 
       - name: Python Tests (Pytest)
         if: ${{ (inputs.run-python != 'off') && (inputs.run-pytest != 'off') && (hashFiles('**/test_*.py', '**/tests/') != '') }}

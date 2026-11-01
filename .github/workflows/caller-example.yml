@@ -11,7 +11,7 @@ jobs:
   quality-gate:
     # ⚠️ 版本铁律：只能用「已验证合法」的 tag，当前有效版本见 README 的 tag 表（v7）。
     # 2026-11-01：v3 -> v7（v2 是坏版本，YAML 非法）。
-    uses: guandada123/engineering-audit-kit/.github/workflows/quality-gate.yml@v7
+    uses: guandada123/engineering-audit-kit/.github/workflows/quality-gate.yml@v8
     with:
       node-version: '20'
       run-eslint: true

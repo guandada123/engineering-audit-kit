@@ -83,7 +83,11 @@ jobs:
       - name: Install bandit
         run: pip install bandit
       - name: Bandit (scripts)
-        run: bandit -r scripts/ -ll || true
+        # v8：去掉 || true，改为 HIGH 即阻断（-lll）。
+        # 原写法 -ll || true 会让安全扫描永不红，与 README 里「高危=0」的表述自相矛盾。
+        # 已知唯一 MEDIUM 是 scripts/audit_locks.py:129 的 urllib.urlopen（固定 https 的 OSV 接口，
+        # 带 ruff noqa S310；bandit 不认 ruff 的 noqa），故门禁口径定为 HIGH，不阻断 MEDIUM。
+        run: bandit -r scripts/ -lll
       - name: Detect hardcoded paths
         run: |
           if grep -rn '"/Users/' scripts/ playbooks/ 2>/dev/null; then
