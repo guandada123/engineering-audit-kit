@@ -32,7 +32,12 @@ repos:
     hooks:
       - id: gitleaks
         name: Gitleaks (secret scan)
-        entry: gitleaks git --pre-commit --verbose
+        entry: gitleaks git --pre-commit --verbose --redact
         language: system
-        stages: [commit]
+        stages: [pre-commit]
         always_run: true
+        # 必须关掉：pre-commit 默认会把变更文件名追加到 entry 后面，而 gitleaks git 只接
+        # 1 个位置参数（仓库路径），多传即 FTL "accepts at most 1 arg(s), received 2"，
+        # 导致任何有文件变更的提交都直接被钩子拦死（2026-11-01 实测，gitleaks 8.30.1）。
+        # 该钩子靠 --pre-commit 自己扫暂存区，不需要文件列表。
+        pass_filenames: false

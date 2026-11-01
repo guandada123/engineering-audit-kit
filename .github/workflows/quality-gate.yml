@@ -89,7 +89,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install ruff bandit pytest
           ruff check .
-          
+
       - name: Python Security Scan (Bandit)
         if: ${{ (inputs.run-python != 'off') && (hashFiles('**/*.py') != '') }}
         run: |
@@ -98,8 +98,15 @@ jobs:
       - name: Python Tests (Pytest)
         if: ${{ (inputs.run-python != 'off') && (hashFiles('**/test_*.py', '**/tests/') != '') }}
         run: |
-          pip install -e . 2>/dev/null || true
-          python -m pytest -x --tb=short -q 2>/dev/null || echo "pytest 未通过（查看详情）"
+          # 仅当项目存在可安装包时才安装。EAK 自身是纯配置分发包（无 [build-system]、
+          # 无 setup.py），直接 pip install -e . 必然失败；原写法用 `2>/dev/null || true`
+          # 吞掉它，下游一旦真的安装失败也会被同样吞掉。
+          if [ -f setup.py ] || grep -q '^\[build-system\]' pyproject.toml; then
+            pip install -e .
+          fi
+          # 原写法 `2>/dev/null || echo` 会吞掉 pytest 失败：所有引用本 workflow 的下游
+          # 都会拿到假绿灯。测试不通过必须真的红。
+          python -m pytest -x --tb=short -q
 
       # ---------- PHP ----------
       - name: Setup PHP
