@@ -9,13 +9,16 @@ on:
 
 jobs:
   quality-gate:
-    # ⚠️ 版本铁律：只能用「已验证合法」的 tag —— v2 是坏版本（YAML 非法，见 README）
-    uses: guandada123/engineering-audit-kit/.github/workflows/quality-gate.yml@v3
+    # ⚠️ 版本铁律：只能用「已验证合法」的 tag，当前有效版本见 README 的 tag 表（v7）。
+    # 2026-11-01：v3 -> v7（v2 是坏版本，YAML 非法）。
+    uses: guandada123/engineering-audit-kit/.github/workflows/quality-gate.yml@v7
     with:
       node-version: '20'
       run-eslint: true
       run-prettier: true
       run-php: auto
       run-python: auto
+      # 本示例仓库无测试文件，保持 auto 即可；多包仓库见 README 的 run-pytest 说明。
+      run-pytest: auto
       npm-audit-level: high
     secrets: inherit
