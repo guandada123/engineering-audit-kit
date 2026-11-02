@@ -95,7 +95,7 @@ curl -fsSL -o ../Claw/.workbuddy/scripts/audit_locks.py \
 | `v7` | ✅ 可用 | v6 + 新增 `run-pytest: auto\|on\|off` 输入。起因：多包/微服务仓库在根目录收集会撞同名 `tests` 包（pytest `ImportPathMismatchError`），v6 会让这类仓库无法用公共门；`off` 是**明确委托**（测试由仓库自己的 workflow 按服务跑），不是吞失败 |
 | `v8` | ✅ **当前** | **把剩下两处吞错变真闸门**：`bandit ... \|\| echo 跳过` → `bandit -r . -lll`（HIGH 即阻断，且不再传 `-c pyproject.toml`——根目录无 `[tool.bandit]` 时报错正是被吞掉的那一段）；`npm audit ... \|\| true` → 去掉 `\|\| true`（放松用 `npm-audit-level`）。本仓 `eak-ci.yml` 的 bandit 同步改为 `-lll` 阻断。**引用方升上来后，此前被吞的安全问题会开始红** |
 
-⚠️ 两个坑，打 tag 前必看：
+⚠️ 三个坑，打 tag 前必看：
 
 1. **本仓库的 tag 与提交时间不一致**：`v2` 指向的提交（6b346f2）比 `v1`（ae57b18）**更旧**，
    于是 Dependabot 按版本号"升级" v1→v2 实际上把下游**降级到了坏版本**。发新 tag 时务必确认
@@ -103,6 +103,10 @@ curl -fsSL -o ../Claw/.workbuddy/scripts/audit_locks.py \
 2. **必须有机器校验**：EAK CI 新增 `Workflow YAML Validate` job（`.github/workflows/**` 变更即触发），
    任何 workflow 文件解析失败就红。此前 CI 只 lint `scripts/`，workflows/ 完全没覆盖，
    坏文件才会被直接打上 tag。
+3. **发完 tag 立刻扫一遍消费点**：`python3 scripts/check_eak_pins.py`
+   —— 新 tag 一旦发布，所有按 tag 拉取的下游就"落后"了，靠人记必然漏（2026-11-02 首次运行
+   就抓到 8 处，其中 onboarding 的 4 份种子自 v1 起从未跟版）。本仓内部由 CI 的
+   `Pin Freshness (self)` 兜底，**跨仓那部分只能靠这一步**。
 
 ## 消费点巡检（pin 是否落后 / 镜像是否漂移）
 
@@ -158,11 +162,11 @@ python3 scripts/check_eak_pins.py --self-test  # 验证判定逻辑本身（临�
 | gitleaks 密钥 | 🔴 阻断 |
 | workflow YAML 合法性 | 🔴 阻断 |
 | bandit 安全（HIGH） | 🔴 阻断（v8 起；`-lll`，中危不阻断） |
-| 硬编码用户路径 | 🟡 **仅警告**（打印 `::warning::`，不失败） |
+| 硬编码用户路径 | 🔴 阻断（2026-11-02 起；实测 0 处） |
 
 > 2026-11-01 历史：此前本表把 bandit 写成「高危=0」、硬编码路径写成「0 处」，属**假事实**——
-> 那两步当时带 `|| true` 或只 warning，永远不会让 CI 变红。v8 已把 bandit 改为真阻断；
-> 硬编码路径仍是警告（当前实测 0 处，但去留取决于是否要它阻断）。
+> 那两步当时带 `|| true` 或只 warning，永远不会让 CI 变红。bandit 已由 v8 改真阻断；
+> 硬编码路径 2026-11-02 也改为真阻断（本仓是模板仓库，带绝对路径会被下游照抄）。
 
 `quality-gate.yml`（给下游用的公共门）的门禁口径：
 

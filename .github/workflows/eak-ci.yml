@@ -106,11 +106,16 @@ jobs:
         # 带 ruff noqa S310；bandit 不认 ruff 的 noqa），故门禁口径定为 HIGH，不阻断 MEDIUM。
         run: bandit -r scripts/ -lll
       - name: Detect hardcoded paths
+        # 2026-11-02 改为真阻断。此前这步只打 ::warning:: 就收工，与 README 里「硬编码路径 0 处」
+        # 并列写在一起，容易被读成「有门禁」—— 那是假事实。
+        # 本仓是给别的仓库照抄的模板，模板里带 /Users/xxx 会被原样复制出去，故不该只是提示。
+        # 实测当前 scripts/ + playbooks/ 命中 0 处，改了不会红。
         run: |
           if grep -rn '"/Users/' scripts/ playbooks/ 2>/dev/null; then
-            echo "::warning::发现硬编码用户路径"
+            echo "::error::发现硬编码用户路径 —— 本仓是模板仓库，绝对路径会被下游照抄"
+            exit 1
           fi
-          echo "✅ 完成"
+          echo "✅ 0 处硬编码用户路径"
       - name: Gitleaks (secret leak scan)
         # 直接调用 gitleaks 开源引擎（MIT 许可），规避 gitleaks-action@v2 自 2026-08 起强制要求
         # GITLEAKS_LICENSE 密钥的 breaking change。引擎本身始终免费，经 Docker 调用无 license 限制。
