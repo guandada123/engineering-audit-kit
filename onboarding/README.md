@@ -14,12 +14,12 @@
 ## 中枢仓库
 
 - 仓库：https://github.com/guandada123/engineering-audit-kit
-- 版本标签：`v1`
+- 版本标签：`v8`（`v2` 是坏版本，勿用）
 - 质量门工作流：`.github/workflows/quality-gate.yml`（Reusable Workflow）
 
 ## 使用步骤（新仓库接入）
 
 1. 拷贝对应 `per-repo/<repo>/.github/workflows/ci.yml` 到业务仓库；
-2. `uses` 行固定引用 `guandada123/engineering-audit-kit@v1`；
+2. `uses` 行固定引用 `guandada123/engineering-audit-kit@v8`；
 3. 在组织设置中允许 Reusable workflows 被调用；
 4. 在分支保护规则中将 `Quality Gate (Reusable)` 设为必需检查。

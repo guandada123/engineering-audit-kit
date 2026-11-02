@@ -104,6 +104,30 @@ curl -fsSL -o ../Claw/.workbuddy/scripts/audit_locks.py \
    任何 workflow 文件解析失败就红。此前 CI 只 lint `scripts/`，workflows/ 完全没覆盖，
    坏文件才会被直接打上 tag。
 
+## 消费点巡检（pin 是否落后 / 镜像是否漂移）
+
+```bash
+python3 scripts/check_eak_pins.py            # 扫 EAK 同级全部仓库，人读摘要
+python3 scripts/check_eak_pins.py --json     # 机器可读
+python3 scripts/check_eak_pins.py --self-test  # 验证判定逻辑本身（临时夹具）
+```
+
+它同时查两类东西，因为两者风险不同：
+
+| 消费方式 | 例子 | 风险 | 本脚本怎么判 |
+| --- | --- | --- | --- |
+| **按 tag 拉取** | `raw.githubusercontent.com/.../vN/scripts/audit_locks.py`、`uses: ...@vN` | **staleness**：EAK 修了判据，消费方仍停在老 tag，门禁悄悄变弱（diff 式门禁对此无效——v5 对 v5 永远相等） | 与最新 tag 比数值；引用不存在的 tag 单列 `unknown` |
+| **本地镜像** | Claw 的 `.workbuddy/scripts/audit_locks.py` | **漂移**：文件在本地、内容是老的 | 与真源比 sha256 |
+
+退出码：`0` 全 current / `1` 有 stale 或 unknown / `2` 无法判定（拿不到 tag 列表）。
+
+**为什么不做成消费方 CI 门**：那会让每次 EAK 发 tag 都红别的仓库，把多仓发布节奏耦死；
+而这类门一旦误红，最容易被 `|| echo` 掉——又回到假绿灯。所以它只做**单点巡检**，不阻塞 PR；
+本仓自身则用 CI 的 `Pin Freshness (self)` job 拦住「onboarding / 文档里的版本号」这类最容易烂的地方。
+
+> 2026-11-02 首次运行就抓到 8 处 stale：onboarding 的 4 份薄调用种子与调用指南
+> 自 v1 起从未跟版（已修到 v8）、QTS 与模板里的 `audit_locks.py` 仍 pin v5（内容与 v8 相同，已齐到 v8）。
+
 ## 项目结构
 
 ```
@@ -113,6 +137,7 @@ curl -fsSL -o ../Claw/.workbuddy/scripts/audit_locks.py \
 ├── .gitmessage         # commit 模板
 ├── CHANGELOG.md
 ├── scripts/            # audit_locks.py（锁文件漏洞门禁）/ bootstrap-audit.sh
+│                       # check_eak_pins.py（消费点 pin 巡检）
 ├── playbooks/          # 审计总纲 · 前端 · Laravel+Livewire · 报告模板
 ├── configs/            # editorconfig / gitattributes / CODEOWNERS 样例
 ├── onboarding/         # 各仓库薄调用 ci.yml 种子（per-repo）

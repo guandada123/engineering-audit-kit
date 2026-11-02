@@ -72,6 +72,23 @@ jobs:
       - name: Ruff format check
         run: ruff format --check scripts/ --config ruff.toml
 
+  pins:
+    # 2026-11-02 新增：本仓自己的「pin 新鲜度」门。
+    # 起因：onboarding/per-repo/*/ci.yml 与 docs/WORKFLOW_CALL_GUIDE.md 自 v1 起一路停在 @v1，
+    # 而 README 一路写到 v8 —— 照抄 onboarding 的人会拿到 6 个版本前的门禁。
+    # 这类「文档里的版本号」没人会主动更新，只能靠机器查。
+    name: Pin Freshness (self)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # 必须有全部 tag 才能算「最新版本」
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Every @vN inside this repo must point to the latest tag
+        run: python3 scripts/check_eak_pins.py --root . --no-mirrors
+
   security:
     name: Security Scan
     runs-on: ubuntu-latest

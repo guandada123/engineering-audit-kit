@@ -8,7 +8,10 @@ on:
 
 jobs:
   quality-gate:
-    uses: guandada123/engineering-audit-kit/.github/workflows/quality-gate.yml@v1
+    # v8 起 pytest 失败即红（原 || echo 吞错，属假绿灯）；bandit 也改成 HIGH 即阻断。
+    # 多包/微服务仓库（根目录 pytest 会撞同名 tests 包）请加 run-pytest: "off"，
+    # 由本仓自己的 workflow 按服务分别跑。
+    uses: guandada123/engineering-audit-kit/.github/workflows/quality-gate.yml@v8
     with:
       run-python: auto
       run-php: off

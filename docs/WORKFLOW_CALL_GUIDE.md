@@ -16,7 +16,7 @@ on:
 
 jobs:
   quality-gate:
-    uses: guandada123/engineering-audit-kit/.github/workflows/quality-gate.yml@v1
+    uses: guandada123/engineering-audit-kit/.github/workflows/quality-gate.yml@v8
     # 也可以固定到具体 commit SHA：
     # uses: guandada123/engineering-audit-kit/.github/workflows/quality-gate.yml@<commit-sha>
     with:
@@ -48,14 +48,16 @@ on:
 
 jobs:
   call:
-    uses: guandada123/engineering-audit-kit/.github/workflows/quality-gate.yml@v1
+    uses: guandada123/engineering-audit-kit/.github/workflows/quality-gate.yml@v8
     secrets: inherit
 ```
 
 ## 权限与组织设置
 
 - 确保 `engineering-audit-kit` 仓库对需要复用的仓库可见（同组织私有或公共）
-- 建议使用 `v1` Tag 固定版本；升级时发布 `v2`，调用方按需迁移
+- 固定到**已验证合法**的 tag（当前 `v8`）；发布新 tag 后由调用方按需迁移，
+  迁移前用 `python3 scripts/check_eak_pins.py` 扫一遍全机消费点，确认没有落在旧 tag 上
+- 🔴 `v2` 是坏版本（workflow YAML 非法，调用即启动失败），任何情况下都不要引用
 - 在组织设置中开启 `Reusable workflows` 权限
 
 ## CODEOWNERS 与分支保护
